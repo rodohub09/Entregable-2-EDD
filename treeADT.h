@@ -42,6 +42,30 @@ private:
   Node* rootNode  = nullptr;
   int   treeSize  = 0;
   
+  Node* findChild(Node* parent, const string& value) const {
+    if (!parent) return nullptr;
+    for (Node* child : parent->children)
+      if (child->element == value)
+        return child;
+    return nullptr;
+  }
+
+  static int toInt(const string& text) {
+    try {
+      return stoi(text);
+    } catch (...) {
+      return 0;
+    }
+  }
+
+  static double toDouble(const string& text) {
+    try {
+      return stod(text);
+    } catch (...) {
+      return 0.0;
+    }
+  }
+  
   void preOrderAux(Node* node, vector<string>& res) const {
     if (!node) return;
     res.push_back(node->element);
@@ -125,6 +149,75 @@ public:
     treeSize -= deleteSubtree(node);
     return true;
   }
+
+  vector<string> listar() const {
+    vector<string> result;
+    if (!rootNode) return result;
+
+    for (Node* libro : rootNode->children) {
+      Node* idNode = findChild(libro, "ID");
+      if (idNode && !idNode->children.empty())
+        result.push_back(idNode->children.front()->element);
+    }
+
+    return result;
+  }
+
+  bool borrar_ratings(double r) {
+    if (!rootNode) return false;
+
+    vector<Position> eliminables;
+    for (Node* libro : rootNode->children) {
+      Node* ratingNode = findChild(libro, "Rating_Promedio");
+      double rating = ratingNode && !ratingNode->children.empty()
+        ? toDouble(ratingNode->children.front()->element)
+        : 0.0;
+      if (rating <= r)
+        eliminables.push_back(Position(libro));
+    }
+
+    bool removedAny = false;
+    for (const Position& pos : eliminables)
+      removedAny = remove(pos) || removedAny;
+
+    return removedAny;
+  }
+
+  vector<string> precursores() const {
+    vector<string> result;
+    if (!rootNode) return result;
+
+    for (Node* libro : rootNode->children) {
+      Node* yearNode = findChild(libro, "year");
+      int year = yearNode && !yearNode->children.empty()
+        ? toInt(yearNode->children.front()->element)
+        : 0;
+
+      bool qualifies = true;
+      Node* similares = findChild(libro, "LibrosSimilares");
+      if (similares) {
+        for (Node* libroSimilar : similares->children) {
+          Node* yearSimilar = findChild(libroSimilar, "year");
+          int similarYear = yearSimilar && !yearSimilar->children.empty()
+            ? toInt(yearSimilar->children.front()->element)
+            : 0;
+
+          if (similarYear <= year) {
+            qualifies = false;
+            break;
+          }
+        }
+      }
+
+      if (qualifies) {
+        Node* idNode = findChild(libro, "ID");
+        if (idNode && !idNode->children.empty())
+          result.push_back(idNode->children.front()->element);
+      }
+    }
+
+    return result;
+  }
   
   Position find(const string& value) const {
     return Position(searchNode(rootNode, value));
@@ -135,8 +228,6 @@ public:
     preOrderAux(rootNode, result);
     return result;
   }
-  
-  vector<string> listar() { return preOrder(); }
   
 private:
   Node* searchNode(Node* node, const string& value) const {

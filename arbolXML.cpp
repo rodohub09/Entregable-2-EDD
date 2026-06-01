@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include <vector>
 
 namespace fs = std::filesystem;
 using namespace std;
@@ -45,28 +46,28 @@ int main(){
 	 **/
         
 	Tree::Position ID = Biblioteca.insert(libro, "ID");
-        Biblioteca.insert(ID, string(actual_book.child_value("id")));
+    Biblioteca.insert(ID, string(actual_book.child_value("id")));
 	
 	Tree::Position titulo = Biblioteca.insert(libro, "Titulo");
-        Biblioteca.insert(titulo, string(actual_book.child_value("title")));
+    Biblioteca.insert(titulo, string(actual_book.child_value("title")));
 	
 	Tree::Position ISBN = Biblioteca.insert(libro, "ISBN");
-        Biblioteca.insert(ISBN, string(actual_book.child_value("isbn")));
+    Biblioteca.insert(ISBN, string(actual_book.child_value("isbn")));
 	
 	Tree::Position year = Biblioteca.insert(libro, "year");
 	Biblioteca.insert(year, string(actual_book.child_value("publication_year")));
 
 	Tree::Position idioma = Biblioteca.insert(libro, "Idioma");
-        Biblioteca.insert(idioma, string(actual_book.child_value("language_code")));
+    Biblioteca.insert(idioma, string(actual_book.child_value("language_code")));
 	
 	Tree::Position descripcion = Biblioteca.insert(libro, "Descripcion");
-        Biblioteca.insert(descripcion, string(actual_book.child_value("description")));
+    Biblioteca.insert(descripcion, string(actual_book.child_value("description")));
 	
 	Tree::Position rating = Biblioteca.insert(libro, "Rating_Promedio");
-        Biblioteca.insert(rating, string(actual_book.child_value("average_rating")));
+    Biblioteca.insert(rating, string(actual_book.child_value("average_rating")));
 	
 	Tree::Position paginas = Biblioteca.insert(libro, "Numero_paginas");
-        Biblioteca.insert(paginas, string(actual_book.child_value("num_pages")));
+    Biblioteca.insert(paginas, string(actual_book.child_value("num_pages")));
 	
 	Tree::Position similares = Biblioteca.insert(libro, "LibrosSimilares");
 	pugi::xpath_node_set libroSimilares = doc.select_nodes("//similar_books/book");
@@ -93,6 +94,27 @@ int main(){
       }
     }
   }
+
+	auto imprimirMuestra = [](const string& titulo, const vector<string>& valores) {
+		cout << titulo << " (" << valores.size() << "): ";
+		const size_t limite = min<size_t>(valores.size(), 20);
+		for (size_t i = 0; i < limite; ++i) {
+			cout << valores[i];
+			if (i + 1 < limite) cout << ", ";
+		}
+		if (valores.size() > limite) {
+			cout << " ...";
+		}
+		cout << '\n';
+	};
+
+	cout << "Archivos procesados: " << archivosProcesados << '\n';
+	imprimirMuestra("listar()", Biblioteca.listar());
+	imprimirMuestra("precursores()", Biblioteca.precursores());
+
+	const bool elimino = Biblioteca.borrar_ratings(3.0);
+	cout << "borrar_ratings(3.0): " << (elimino ? "si" : "no") << '\n';
+	imprimirMuestra("listar() despues de borrar_ratings", Biblioteca.listar());
 
  
   return 0;
